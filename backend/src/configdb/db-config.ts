@@ -1,15 +1,28 @@
-import mysql from 'mysql2';
+import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const dbConfig = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-}); 
-
-dbConfig.connect(() => {
-  console.log("MySQL Connected");
+export const dbConfig = mysql.createPool({
+  host: process.env.DBHOST,
+  user: process.env.DBUSER,
+  password: process.env.DBPASSWORD,
+  database: process.env.DBDATABASENAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
+
+async function testConnection() {
+  try {
+    const connection = await dbConfig.getConnection();
+    console.log("✅ MySQL Connected ke PiyoPlate DB!");
+    connection.release(); 
+  } catch (err: any) {
+    console.error("❌ Gagal Konek Database!");
+    console.error("Kode Error:", err.code);
+    console.error("Pesan:", err.message);
+  }
+}
+
+testConnection();
