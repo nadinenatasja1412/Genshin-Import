@@ -10,6 +10,16 @@ model Item {
   createdAt   DateTime @default(now())
 }
 
+model Users {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  full_name String?
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+}
+
 datasource db {
   provider = "mysql"
 }
