@@ -9,3 +9,11 @@ model Item {
   price       Float
   createdAt   DateTime @default(now())
 }
+
+datasource db {
+  provider = "mysql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
