@@ -1,0 +1,11 @@
+model Item {
+  id          Int      @id @default(autoincrement())
+  name        String
+  category    String
+  itemType    String
+  description String?
+  stock       Int      @default(0)
+  image       String
+  price       Float
+  createdAt   DateTime @default(now())
+}
