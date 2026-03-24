@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import {prisma} from '../lib/prisma';
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -30,7 +28,6 @@ export const login = async (req: Request, res: Response) => {
       user: {
         id: user.id,
         username: user.username,
-        full_name: user.full_name,
         role: user.role
       }
     });
