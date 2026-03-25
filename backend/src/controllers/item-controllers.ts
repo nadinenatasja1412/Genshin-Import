@@ -31,7 +31,6 @@ export const updateItem = async (req: Request, res: Response) => {
   res.json(updated);
 };
 
-// --- DELETE (Khusus Admin) ---
 export const deleteItem = async (req: Request, res: Response) => {
   const { id } = req.params;
   await prisma.items.delete({ where: { id: Number(id) } });
