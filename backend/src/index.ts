@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './route/authRoute';
 import itemRoutes from './route/itemsRoute';
 import transactionRoutes from './route/transactionsRoute';
+import path from 'path';
 
 const app = express();
 
@@ -14,8 +15,9 @@ app.use(express.json());
 };
 
 app.use('/api/auth', authRoutes);
-app.use('/api/items', itemRoutes);
+app.use('/api', itemRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 const PORT = 3000;
 app.listen(PORT, () => {

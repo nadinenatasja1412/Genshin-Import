@@ -9,14 +9,31 @@ export const getAllItems = async (req: Request, res: Response) => {
 };
 
 export const createItem = async (req: Request, res: Response) => {
-  const { name, category, itemType, description, stock, image, price } = req.body;
   try {
+    const { name, category, item_type, description, stock, price } = req.body;
+    
+    // Ambil nama file dari multer
+    const file = req.file;
+    if (!file) return res.status(400).json({ message: "Wajib upload gambar!" });
+
+    // Buat URL lengkapnya
+    const imageUrl = `http://localhost:3000/uploads/${file.filename}`;
+
     const newItem = await prisma.items.create({
-      data: { name, category, item_type: itemType, description, stock, image_url: image, price }
+      data: {
+        name,
+        category,
+        item_type,
+        description,
+        stock: Number(stock),
+        price: parseFloat(price),
+        image_url: imageUrl // Simpan URL ke DB
+      }
     });
+
     res.status(201).json(newItem);
-  } catch (error) {
-    res.status(500).json({ error: "Gagal menambah item" });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 };
 
