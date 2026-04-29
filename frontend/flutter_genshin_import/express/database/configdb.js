@@ -3,11 +3,11 @@ const mysql = require('mysql2');
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: '',
-    database: 'genshindb', 
+    password: '', // sesuaikan password database kamu
+    database: 'genshin_import', // sesuaikan nama db kamu
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 });
 
-db.connect();
+module.exports = pool.promise();
