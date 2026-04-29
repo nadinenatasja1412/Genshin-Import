@@ -1,9 +1,11 @@
 var express = require('express');
 var router = express.Router();
+var authController = require('../controller/authController');
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
-});
+// Route untuk registrasi
+router.post('/register', authController.register);
+
+// Route untuk login
+router.post('/login', authController.login);
 
 module.exports = router;
