@@ -39,11 +39,9 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    // 2. Panggil API sekali saja saat widget pertama kali muncul
     _itemsFuture = _apiService.getAllItems();
   }
 
-  // Fungsi buat refresh data kalau ada perubahan
   void _refreshData() {
     setState(() {
       _itemsFuture = _apiService.getAllItems();
