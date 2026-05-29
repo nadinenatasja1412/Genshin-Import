@@ -1,78 +1,190 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
-import '../models/itemsModel.dart';
-import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/models.dart';
 
 class ApiService {
-  static const String baseUrl = "http://10.0.2.2:3000/api";
+  static const String baseUrl = 'http://10.0.2.2:3000/api';
+  static Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
 
-  Future<bool> uploadItem({
-    required String name,
-    required String category,
-    required String price,
-    required String stock,
-    required File imageFile, // File fisik dari galeri
-  }) async {
-    try {
-      var request = http.MultipartRequest('POST', Uri.parse("$baseUrl/items"));
+  static Future<Map<String, String>> _authHeaders() async {
+    final token = await _getToken();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
 
-      // Menambahkan data teks
-      request.fields['name'] = name;
-      request.fields['category'] = category;
-      request.fields['price'] = price;
-      request.fields['stock'] = stock;
+  // ── Helpers ────────────────────────────────────────────────
+  static Map<String, dynamic> _parseBody(http.Response res) {
+    return jsonDecode(res.body) as Map<String, dynamic>;
+  }
 
-      // Menambahkan data file gambar
-      var stream = http.ByteStream(imageFile.openRead());
-      var length = await imageFile.length();
-
-      var multipartFile = http.MultipartFile(
-        'image', // Harus sama dengan upload.single('image') di Backend Multer
-        stream,
-        length,
-        filename: basename(imageFile.path),
+  static void _checkStatus(http.Response res) {
+    if (res.statusCode >= 400) {
+      final body = _parseBody(res);
+      throw ApiException(
+        body['message'] as String? ?? 'Unknown error',
+        res.statusCode,
       );
-
-      request.files.add(multipartFile);
-
-      // Kirim ke server
-      var response = await request.send();
-
-      return response.statusCode == 201;
-    } catch (e) {
-      print("Upload Error: $e");
-      return false;
     }
   }
 
-  Future<List<Item>> getAllItems() async {
-    final response = await http.get(Uri.parse("$baseUrl/items"));
+  // ══════════════════════════════════════════════════════════
+  //  AUTH
+  // ══════════════════════════════════════════════════════════
 
-    if (response.statusCode == 200) {
-      List data = json.decode(response.body);
-      return data.map((json) => Item.fromJson(json)).toList();
-    } else {
-      throw Exception("Gagal mengambil data dari Teyvat");
-    }
-  }
-
-  Future<bool> buyItem(String userId, String itemId, int quantity) async {
-    final response = await http.post(
-      Uri.parse("$baseUrl/transactions/buy"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "user_id": userId,
-        "item_id": itemId,
-        "quantity": quantity,
-      }),
+  static Future<AuthResult> login(String email, String password) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
     );
-    return response.statusCode == 201;
+    _checkStatus(res);
+    final body = _parseBody(res);
+    return AuthResult.fromJson(body);
   }
 
-  // 3. Hapus Item (Admin)
-  Future<bool> deleteItem(String id) async {
-    final response = await http.delete(Uri.parse("$baseUrl/items/$id"));
-    return response.statusCode == 200;
+  static Future<AuthResult> register(
+    String name,
+    String email,
+    String password,
+  ) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'name': name, 'email': email, 'password': password}),
+    );
+    _checkStatus(res);
+    return AuthResult.fromJson(_parseBody(res));
   }
+
+  static Future<AuthResult> googleLogin(String idToken) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/google'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'idToken': idToken}),
+    );
+    _checkStatus(res);
+    return AuthResult.fromJson(_parseBody(res));
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  WEAPONS
+  // ══════════════════════════════════════════════════════════
+
+  /// GET /api/weapons — public
+  static Future<List<Weapon>> getWeapons({
+    String search = '',
+    String type = '',
+  }) async {
+    final uri = Uri.parse('$baseUrl/weapons').replace(
+      queryParameters: {
+        if (search.isNotEmpty) 'search': search,
+        if (type.isNotEmpty) 'type': type,
+      },
+    );
+    final res = await http.get(uri);
+    _checkStatus(res);
+    final body = _parseBody(res);
+    final List data = body['data'] as List;
+    return data.map((e) => Weapon.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  /// GET /api/weapons/:id — public
+  static Future<Weapon> getWeaponById(int id) async {
+    final res = await http.get(Uri.parse('$baseUrl/weapons/$id'));
+    _checkStatus(res);
+    return Weapon.fromJson(_parseBody(res)['data'] as Map<String, dynamic>);
+  }
+
+  /// POST /api/weapons — admin
+  static Future<Weapon> createWeapon(Map<String, dynamic> data) async {
+    final headers = await _authHeaders();
+    final res = await http.post(
+      Uri.parse('$baseUrl/weapons'),
+      headers: headers,
+      body: jsonEncode(data),
+    );
+    _checkStatus(res);
+    return Weapon.fromJson(_parseBody(res)['data'] as Map<String, dynamic>);
+  }
+
+  /// PUT /api/weapons/:id — admin
+  static Future<Weapon> updateWeapon(int id, Map<String, dynamic> data) async {
+    final headers = await _authHeaders();
+    final res = await http.put(
+      Uri.parse('$baseUrl/weapons/$id'),
+      headers: headers,
+      body: jsonEncode(data),
+    );
+    _checkStatus(res);
+    return Weapon.fromJson(_parseBody(res)['data'] as Map<String, dynamic>);
+  }
+
+  /// DELETE /api/weapons/:id — admin
+  static Future<void> deleteWeapon(int id) async {
+    final headers = await _authHeaders();
+    final res = await http.delete(
+      Uri.parse('$baseUrl/weapons/$id'),
+      headers: headers,
+    );
+    _checkStatus(res);
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  ORDERS
+  // ══════════════════════════════════════════════════════════
+
+  /// POST /api/orders — authenticated user
+  static Future<Order> placeOrder(int weaponId, int quantity) async {
+    final headers = await _authHeaders();
+    final res = await http.post(
+      Uri.parse('$baseUrl/orders'),
+      headers: headers,
+      body: jsonEncode({'weapon_id': weaponId, 'quantity': quantity}),
+    );
+    _checkStatus(res);
+    return Order.fromJson(_parseBody(res)['data'] as Map<String, dynamic>);
+  }
+
+  /// GET /api/orders/my — authenticated user
+  static Future<List<Order>> getMyOrders() async {
+    final headers = await _authHeaders();
+    final res = await http.get(
+      Uri.parse('$baseUrl/orders/my'),
+      headers: headers,
+    );
+    _checkStatus(res);
+    final List data = _parseBody(res)['data'] as List;
+    return data.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
+  }
+}
+
+// ── Supporting classes ──────────────────────────────────────
+
+class AuthResult {
+  final String token;
+  final AppUser user;
+
+  AuthResult({required this.token, required this.user});
+
+  factory AuthResult.fromJson(Map<String, dynamic> json) {
+    return AuthResult(
+      token: json['token'] as String,
+      user: AppUser.fromJson(json['user'] as Map<String, dynamic>),
+    );
+  }
+}
+
+class ApiException implements Exception {
+  final String message;
+  final int statusCode;
+  ApiException(this.message, this.statusCode);
+
+  @override
+  String toString() => message;
 }

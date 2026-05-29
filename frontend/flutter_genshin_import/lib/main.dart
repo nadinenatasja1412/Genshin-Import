@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_genshin_import/models/itemsModel.dart';
-import 'package:flutter_genshin_import/services/apiServices.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_genshin_import/services/authServices.dart';
+import 'package:flutter_genshin_import/screens/ui/login.dart';
+import 'package:flutter_genshin_import/screens/ui/weapon-list.dart';
+import 'package:flutter_genshin_import/theme/appTheme.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AuthProvider()..init(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -12,111 +21,70 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Biar label debug ilang
       title: 'Genshin Import',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Teyvat Digital Shop'),
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkTheme,
+      home: const _SplashGate(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
+/// Decides whether to show Login or the main screen based on saved session.
+class _SplashGate extends StatefulWidget {
+  const _SplashGate();
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<_SplashGate> createState() => _SplashGateState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  // 1. Deklarasikan variabel Future untuk menampung data
-  late Future<List<Item>> _itemsFuture;
-  final ApiService _apiService = ApiService();
+class _SplashGateState extends State<_SplashGate> {
+  bool _ready = false;
 
   @override
   void initState() {
     super.initState();
-    _itemsFuture = _apiService.getAllItems();
+    _checkSession();
   }
 
-  void _refreshData() {
-    setState(() {
-      _itemsFuture = _apiService.getAllItems();
-    });
+  Future<void> _checkSession() async {
+    // AuthProvider.init() is called in the ChangeNotifierProvider above,
+    // but we need to wait one frame for it to propagate.
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (mounted) setState(() => _ready = true);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshData, // Tombol refresh manual
+    if (!_ready) {
+      return Scaffold(
+        backgroundColor: AppColors.deepNavy,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.gold, width: 2),
+                  color: AppColors.darkCard,
+                ),
+                child: const Icon(
+                  Icons.shield,
+                  size: 44,
+                  color: AppColors.gold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const CircularProgressIndicator(color: AppColors.gold),
+            ],
           ),
-        ],
-      ),
-      body: FutureBuilder<List<Item>>(
-        future: _itemsFuture,
-        builder: (context, snapshot) {
-          // Kondisi: Lagi Loading
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          // Kondisi: Ada Error (XAMPP mati atau IP salah)
-          else if (snapshot.hasError) {
-            return Center(
-              child: Text("Gagal konek ke Celestia: ${snapshot.error}"),
-            );
-          }
-          // Kondisi: Data Berhasil Masuk
-          else if (snapshot.hasData) {
-            final items = snapshot.data!;
+        ),
+      );
+    }
 
-            if (items.isEmpty) {
-              return const Center(child: Text("Stok barang lagi kosong!"));
-            }
-
-            return ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue[100],
-                      child: const Icon(Icons.shopping_bag),
-                    ),
-                    title: Text(
-                      item.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text("${item.category} | ${item.price} Mora"),
-                    trailing: ElevatedButton(
-                      onPressed: () {
-                        // Nanti di sini panggil ApiService().buyItem
-                        print("Beli ${item.name}");
-                      },
-                      child: const Text("Beli"),
-                    ),
-                  ),
-                );
-              },
-            );
-          }
-
-          return const Center(child: Text("Tidak ada data."));
-        },
-      ),
-    );
+    final auth = context.watch<AuthProvider>();
+    return auth.isLoggedIn ? const WeaponListScreen() : const LoginScreen();
   }
 }
