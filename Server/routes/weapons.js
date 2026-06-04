@@ -111,8 +111,6 @@ router.put('/:id', verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
-// ── DELETE /api/weapons/:id ───────────────────────────────────────────────────
-// Admin only — delete weapon
 router.delete('/:id', verifyToken, requireAdmin, async (req, res) => {
   try {
     const [existing] = await db.query('SELECT id FROM weapons WHERE id = ?', [req.params.id]);

@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-const db      = require('../config/db');
+const db   = require('../config/db');
 const { verifyToken, requireAdmin } = require('../middleware/auth');
 
 
@@ -77,8 +77,6 @@ router.get('/my', verifyToken, async (req, res) => {
   }
 });
 
-// ── GET /api/orders ───────────────────────────────────────────────────────────
-// Admin only — view all orders
 router.get('/', verifyToken, requireAdmin, async (req, res) => {
   try {
     const [rows] = await db.query(
