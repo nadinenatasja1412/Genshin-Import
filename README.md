@@ -31,23 +31,25 @@
 ## 2. Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  Flutter Mobile App                 │
-│   (Login · Register · Weapon List · Detail · Form   │
-│    · Order History)                                 │
-└───────────────────┬─────────────────────────────────┘
-                    │ HTTP / REST (Bearer JWT)
-┌───────────────────▼─────────────────────────────────┐
-│               Node.js + Express API                 │
-│   /api/auth   /api/weapons   /api/orders   /api/cart│
-└───────────────────┬─────────────────────────────────┘
-                    │ mysql2 pool
-┌───────────────────▼─────────────────────────────────┐
-│               MySQL 8 Database                      │
-│   users · weapons · orders                          │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                          FLUTTER MOBILE APP                              │
+│  (Login • Register • Weapon List • Detail • Admin Form • Order History)  │
+└───────────────────────────────────┬──────────────────────────────────────┘
+                                    │ 
+                                    │ HTTP / REST (Bearer JWT)
+                                    │ 
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                         NODE.JS + EXPRESS API                          │
+│     /api/auth   •   /api/weapons   •   /api/orders   •   /api/cart     │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ 
+                                    │ Connection pool (mysql2)
+                                    │ 
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                           MYSQL DATABASE                               │
+│                   users  •  weapons  •  orders                         │
+└────────────────────────────────────────────────────────────────────────┘
 ```
-
 ---
 
 ## 3. Database Design
@@ -369,8 +371,7 @@ flutter run
 
 ### Front-End (Flutter)
 - [x] ≥ 5 UI components (Button, TextField, DropdownButton, FilterChip, Card, Dialog, SnackBar, SliverAppBar…)
-- [x] ≥ 7 pages (Login, Register, Weapon List, Weapon Detail, Weapon Form, Order History, Cart)
-- [x] Cart page with quantity update and checkout
+- [x] ≥ 5 pages (Login, Register, Weapon List, Weapon Detail, Weapon Form, Order History, Cart)
 - [x] ≥ 3 data validations (email format, password strength, name length, stock ≥ 0, price > 0, confirm match, quantity…)
 - [x] Error messages shown for all validation failures
 
