@@ -5,9 +5,11 @@ import '../../services/authServices.dart';
 import '../widgets/widgets.dart';
 import '../../models/models.dart';
 import '../../services/apiServices.dart';
+import '../../services/cartServices.dart';
 import './weapon-detail.dart';
 import './weapon-form.dart';
 import './order-history.dart';
+import './cart.dart';
 import './login.dart';
 
 class WeaponListScreen extends StatefulWidget {
@@ -38,6 +40,9 @@ class _WeaponListScreenState extends State<WeaponListScreen> {
   void initState() {
     super.initState();
     _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CartProvider>().loadCart();
+    });
   }
 
   Future<void> _load() async {
@@ -123,13 +128,51 @@ class _WeaponListScreenState extends State<WeaponListScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final cart = context.watch<CartProvider>();
     final isAdmin = auth.isAdmin;
 
     return Scaffold(
       appBar: AppBar(
         title: const GenshinTitle(text: 'GENSHIN IMPORT'),
         actions: [
-          if (!isAdmin)
+          if (!isAdmin) ...[
+            IconButton(
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.shopping_cart),
+                  if (cart.totalQuantity > 0)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: AppColors.error,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${cart.totalQuantity}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              tooltip: 'Cart',
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CartScreen()),
+                );
+                if (mounted) {
+                  context.read<CartProvider>().loadCart();
+                }
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.receipt_long),
               tooltip: 'My Orders',
@@ -138,6 +181,7 @@ class _WeaponListScreenState extends State<WeaponListScreen> {
                 MaterialPageRoute(builder: (_) => const OrderHistoryScreen()),
               ),
             ),
+          ],
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',

@@ -57,6 +57,34 @@ class Weapon {
   );
 }
 
+class CartItem {
+  final int id;
+  final int userId;
+  final int weaponId;
+  final int quantity;
+  final Weapon weapon;
+
+  CartItem({
+    required this.id,
+    required this.userId,
+    required this.weaponId,
+    required this.quantity,
+    required this.weapon,
+  });
+
+  double get totalPrice => weapon.price * quantity;
+
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      id: json['id'] as int,
+      userId: json['user_id'] as int,
+      weaponId: json['weapon_id'] as int,
+      quantity: json['quantity'] as int,
+      weapon: Weapon.fromJson(json['weapon'] as Map<String, dynamic>),
+    );
+  }
+}
+
 // lib/models/order.dart
 class Order {
   final int id;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_genshin_import/services/authServices.dart';
+import 'package:flutter_genshin_import/services/cartServices.dart';
 import 'package:flutter_genshin_import/screens/ui/login.dart';
 import 'package:flutter_genshin_import/screens/ui/weapon-list.dart';
 import 'package:flutter_genshin_import/theme/appTheme.dart';
@@ -8,8 +9,11 @@ import 'package:flutter_genshin_import/theme/appTheme.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider()..init(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+      ],
       child: const MyApp(),
     ),
   );

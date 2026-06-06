@@ -17,6 +17,19 @@ const pool = mysql.createPool({
   try {
     const conn = await pool.getConnection();
     console.log('✅  MySQL connected:', process.env.DB_NAME);
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS cart_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        weapon_id INT NOT NULL,
+        quantity INT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_cart_item (user_id, weapon_id),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (weapon_id) REFERENCES weapons(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
     conn.release();
   } catch (err) {
     console.error('❌  MySQL connection failed:', err.message);
