@@ -9,7 +9,6 @@ var indexRouter = require('./routes/index');
 
 var app = express();
 
-const cors = require('cors');
 app.use(cors());
 
 app.use((req, _res, next) => {
