@@ -17,10 +17,11 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _user != null;
   bool get isAdmin => _user?.isAdmin ?? false;
 
-  final _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
-  // // TODO: Replace with your Web client ID from Google Cloud Console.
-  // // Example: const _webClientId = '1234567890-abcdefg.apps.googleusercontent.com';
-  // const String _webClientId = 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com';
+  final _googleSignIn = GoogleSignIn(
+    serverClientId:
+        '247437937650-i9jeijklkdv59daqkcvq652so1fse2so.apps.googleusercontent.com',
+    scopes: ['email', 'profile'],
+  );
 
   // // Provide the web client ID as `serverClientId` so Android/iOS will
   // // return an ID token usable by the backend for server-side verification.
@@ -29,7 +30,6 @@ class AuthProvider extends ChangeNotifier {
   //   serverClientId: _webClientId,
   // );
 
-  
   // ── Restore session ──────────────────────────────────────
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -63,6 +63,9 @@ class AuthProvider extends ChangeNotifier {
     try {
       final result = await ApiService.login(email, password);
       await _saveSession(result.token, result.user);
+      debugPrint('DEBUG role: ${result.user.role}'); // tambah ini
+      debugPrint('DEBUG isAdmin: ${result.user.isAdmin}');
+
       return true;
     } on ApiException catch (e) {
       _error = e.message;

@@ -130,6 +130,7 @@ class _WeaponListScreenState extends State<WeaponListScreen> {
     final auth = context.watch<AuthProvider>();
     final cart = context.watch<CartProvider>();
     final isAdmin = auth.isAdmin;
+    //debugPrint('DEBUG weapon-list isAdmin: $isAdmin');
 
     return Scaffold(
       appBar: AppBar(
@@ -353,7 +354,7 @@ class _WeaponListScreenState extends State<WeaponListScreen> {
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            childAspectRatio: 0.62,
+                            childAspectRatio: 0.50,
                             crossAxisSpacing: 4,
                             mainAxisSpacing: 4,
                           ),
