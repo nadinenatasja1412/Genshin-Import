@@ -5,6 +5,13 @@ var jwt      = require('jsonwebtoken');
 var { OAuth2Client } = require('google-auth-library');
 var db = require('../config/db');
 
+if (!process.env.GOOGLE_CLIENT_ID) {
+  throw new Error('GOOGLE_CLIENT_ID environment variable is required.');
+}
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required.');
+}
+
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 function generateToken(payload) {
@@ -100,6 +107,9 @@ router.post('/google', async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
+    if (!payload || !payload.sub || !payload.email || !payload.name) {
+      return res.status(401).json({ success: false, message: 'Google authentication failed.' });
+    }
     const { sub: googleId, email, name } = payload;
 
     // Upsert user

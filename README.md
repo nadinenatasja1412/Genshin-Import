@@ -31,23 +31,25 @@
 ## 2. Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  Flutter Mobile App                 │
-│   (Login · Register · Weapon List · Detail · Form   │
-│    · Order History)                                 │
-└───────────────────┬─────────────────────────────────┘
-                    │ HTTP / REST (Bearer JWT)
-┌───────────────────▼─────────────────────────────────┐
-│               Node.js + Express API                 │
-│   /api/auth   /api/weapons   /api/orders            │
-└───────────────────┬─────────────────────────────────┘
-                    │ mysql2 pool
-┌───────────────────▼─────────────────────────────────┐
-│               MySQL 8 Database                      │
-│   users · weapons · orders                          │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                          FLUTTER MOBILE APP                              │
+│  (Login • Register • Weapon List • Detail • Admin Form • Order History)  │
+└───────────────────────────────────┬──────────────────────────────────────┘
+                                    │ 
+                                    │ HTTP / REST (Bearer JWT)
+                                    │ 
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                         NODE.JS + EXPRESS API                          │
+│     /api/auth   •   /api/weapons   •   /api/orders   •   /api/cart     │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ 
+                                    │ Connection pool (mysql2)
+                                    │ 
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                           MYSQL DATABASE                               │
+│                   users  •  weapons  •  orders                         │
+└────────────────────────────────────────────────────────────────────────┘
 ```
-
 ---
 
 ## 3. Database Design
@@ -89,6 +91,15 @@
 | status | ENUM('pending','confirmed','cancelled') | |
 | ordered_at | TIMESTAMP | |
 
+#### `cart_items`
+| Column | Type | Notes |
+|--------|------|-------|
+| id | INT PK AUTO_INCREMENT | |
+| user_id | INT FK → users | |
+| weapon_id | INT FK → weapons | |
+| quantity | INT NOT NULL | |
+| created_at | TIMESTAMP DEFAULT CURRENT_TIMESTAMP | |
+
 ### CRUD coverage
 | Operation | Endpoint | Description |
 |-----------|----------|-------------|
@@ -106,7 +117,7 @@
 
 ### File structure
 ```
-backend/
+Server/
 ├── server.js            Entry point, middleware, route mounting
 ├── package.json
 ├── .env.example         Environment variables template
@@ -117,6 +128,7 @@ backend/
 ├── routes/
 │   ├── auth.js          POST /login, /register, /google
 │   ├── weapons.js       GET / GET/:id / POST / PUT / DELETE
+│   ├── cart.js          GET / POST / PUT / DELETE / POST /checkout
 │   └── orders.js        POST / GET /my / GET (admin)
 └── database.sql         Schema + seed data
 ```
@@ -146,6 +158,15 @@ backend/
 | GET | /my | User JWT | Current user's order history |
 | GET | / | Admin JWT | All orders |
 
+#### Cart (`/api/cart`)
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | / | User JWT | Get current user's cart items |
+| POST | / | User JWT | Add weapon to cart or update existing item |
+| PUT | /:id | User JWT | Update cart item quantity |
+| DELETE | /:id | User JWT | Remove item from cart |
+| POST | /checkout | User JWT | Checkout cart and create orders |
+
 ### ≥ 2 GET + ≥ 1 mutating request ✓
 - GET /api/weapons
 - GET /api/weapons/:id
@@ -160,7 +181,6 @@ backend/
 ## 5. Front-End (Flutter)
 
 ### Pages (≥ 5 required)
-
 | # | Screen | File | Description |
 |---|--------|------|-------------|
 | 1 | **Login** | `login_screen.dart` | Email/password + Google sign-in |
@@ -169,6 +189,7 @@ backend/
 | 4 | **Weapon Detail** | `weapon_detail_screen.dart` | Full info + buy controls |
 | 5 | **Weapon Form** | `weapon_form_screen.dart` | Admin: create / edit weapon |
 | 6 | **Order History** | `order_history_screen.dart` | User's purchase history |
+| 7 | **Cart** | `cart.dart` | User shopping cart with quantity update and checkout |
 
 ### UI Components (≥ 5 required)
 
@@ -307,12 +328,12 @@ All the above are also validated server-side with appropriate HTTP status codes 
 
 ### 1 — Database
 ```bash
-mysql -u root -p < backend/database.sql
+mysql -u root -p < Server/database.sql
 ```
 
 ### 2 — Back-End
 ```bash
-cd backend
+cd Server
 cp .env.example .env
 # Fill in DB_PASSWORD and GOOGLE_CLIENT_ID
 npm install
@@ -321,9 +342,9 @@ npm run dev          # http://localhost:3000
 
 ### 3 — Flutter App
 ```bash
-cd flutter_app
+cd frontend/flutter_genshin_import
 flutter pub get
-# In lib/services/api_service.dart set baseUrl:
+# In lib/services/apiServices.dart set baseUrl:
 #   Android emulator  → http://10.0.2.2:3000/api
 #   iOS simulator     → http://127.0.0.1:3000/api
 #   Physical device   → http://<your-LAN-IP>:3000/api
@@ -343,20 +364,20 @@ flutter run
 ## 10. Requirements Checklist
 
 ### Database (MySQL)
-- [x] CREATE — weapons, users, orders
-- [x] READ — weapons list, weapon detail, orders
-- [x] UPDATE — weapon edit
-- [x] DELETE — weapon delete
+- [x] CREATE — weapons, users, orders, cart_items
+- [x] READ — weapons list, weapon detail, cart items, orders
+- [x] UPDATE — weapon edit, cart item quantity
+- [x] DELETE — weapon delete, cart item remove
 
 ### Front-End (Flutter)
 - [x] ≥ 5 UI components (Button, TextField, DropdownButton, FilterChip, Card, Dialog, SnackBar, SliverAppBar…)
-- [x] ≥ 5 pages (Login, Register, Weapon List, Weapon Detail, Weapon Form, Order History)
+- [x] ≥ 5 pages (Login, Register, Weapon List, Weapon Detail, Weapon Form, Order History, Cart)
 - [x] ≥ 3 data validations (email format, password strength, name length, stock ≥ 0, price > 0, confirm match, quantity…)
 - [x] Error messages shown for all validation failures
 
 ### Back-End (Node.js / Express)
-- [x] ≥ 2 GET requests (GET /weapons, GET /weapons/:id, GET /orders/my)
-- [x] ≥ 1 POST/PUT/DELETE (POST /weapons, PUT /weapons/:id, DELETE /weapons/:id, POST /orders)
+- [x] ≥ 3 GET requests (GET /weapons, GET /weapons/:id, GET /orders/my, GET /cart)
+- [x] ≥ 1 POST/PUT/DELETE (POST /weapons, PUT /weapons/:id, DELETE /weapons/:id, POST /orders, POST /cart, PUT /cart/:id, DELETE /cart/:id)
 
 ### Authentication
 - [x] Login with DB user (bcrypt)

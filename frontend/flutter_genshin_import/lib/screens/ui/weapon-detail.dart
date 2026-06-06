@@ -6,6 +6,7 @@ import '../widgets/widgets.dart';
 import '../../models/models.dart';
 import '../../services/apiServices.dart';
 import '../../services/authServices.dart';
+import '../../services/cartServices.dart';
 
 class WeaponDetailScreen extends StatefulWidget {
   const WeaponDetailScreen({super.key, required this.weapon});
@@ -311,6 +312,39 @@ class _WeaponDetailScreenState extends State<WeaponDetailScreen> {
                               )
                             : const Icon(Icons.shopping_cart, size: 20),
                         label: Text(_buying ? 'Processing…' : 'BUY NOW'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _buying
+                            ? null
+                            : () async {
+                                final cart = context.read<CartProvider>();
+                                await cart.addToCart(_weapon, _quantity);
+                                if (cart.error != null) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(cart.error!),
+                                        backgroundColor: AppColors.error,
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Added to cart.'),
+                                        backgroundColor: AppColors.success,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                        icon: const Icon(Icons.add_shopping_cart, size: 20),
+                        label: const Text('ADD TO CART'),
                       ),
                     ),
                   ],

@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 const db      = require('../config/db');
-const { verifyToken, requireAdmin } = require('../middleware/auth');
+const { verifyToken, requireAdmin } = require('../middleware/middleware');
 
 router.get('/', async (req, res) => {
   try {

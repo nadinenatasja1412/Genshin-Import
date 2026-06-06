@@ -162,6 +162,58 @@ class ApiService {
     final List data = _parseBody(res)['data'] as List;
     return data.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
   }
+
+  /// CART
+  static Future<List<CartItem>> getCartItems() async {
+    final headers = await _authHeaders();
+    final res = await http.get(Uri.parse('$baseUrl/cart'), headers: headers);
+    _checkStatus(res);
+    final List data = _parseBody(res)['data'] as List;
+    return data
+        .map((e) => CartItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  static Future<CartItem> addCartItem(int weaponId, int quantity) async {
+    final headers = await _authHeaders();
+    final res = await http.post(
+      Uri.parse('$baseUrl/cart'),
+      headers: headers,
+      body: jsonEncode({'weapon_id': weaponId, 'quantity': quantity}),
+    );
+    _checkStatus(res);
+    return CartItem.fromJson(_parseBody(res)['data'] as Map<String, dynamic>);
+  }
+
+  static Future<CartItem> updateCartItem(int cartItemId, int quantity) async {
+    final headers = await _authHeaders();
+    final res = await http.put(
+      Uri.parse('$baseUrl/cart/$cartItemId'),
+      headers: headers,
+      body: jsonEncode({'quantity': quantity}),
+    );
+    _checkStatus(res);
+    return CartItem.fromJson(_parseBody(res)['data'] as Map<String, dynamic>);
+  }
+
+  static Future<void> deleteCartItem(int cartItemId) async {
+    final headers = await _authHeaders();
+    final res = await http.delete(
+      Uri.parse('$baseUrl/cart/$cartItemId'),
+      headers: headers,
+    );
+    _checkStatus(res);
+  }
+
+  static Future<void> checkoutCart() async {
+    final headers = await _authHeaders();
+    final res = await http.post(
+      Uri.parse('$baseUrl/cart/checkout'),
+      headers: headers,
+      body: jsonEncode({}),
+    );
+    _checkStatus(res);
+  }
 }
 
 // ── Supporting classes ──────────────────────────────────────
