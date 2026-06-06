@@ -18,7 +18,18 @@ class AuthProvider extends ChangeNotifier {
   bool get isAdmin => _user?.isAdmin ?? false;
 
   final _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+  // // TODO: Replace with your Web client ID from Google Cloud Console.
+  // // Example: const _webClientId = '1234567890-abcdefg.apps.googleusercontent.com';
+  // const String _webClientId = 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com';
 
+  // // Provide the web client ID as `serverClientId` so Android/iOS will
+  // // return an ID token usable by the backend for server-side verification.
+  // final _googleSignIn = GoogleSignIn(
+  //   scopes: ['email', 'profile'],
+  //   serverClientId: _webClientId,
+  // );
+
+  
   // ── Restore session ──────────────────────────────────────
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
