@@ -68,7 +68,7 @@ INSERT INTO users (name, email, password, role) VALUES
 -- Regular user  (password: User@123)
 INSERT INTO users (name, email, password, role) VALUES
   ('Traveler', 'traveler@teyvat.com',
-   '$2b$10$abc123defghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOP', 'user');
+   '$2a$12$ErFTdiiOOImcZ2sfF0sTG.Ib1xcWbmytw1Dx782JmBnrQ2rROIzXm', 'user');
 
 -- Weapons
 INSERT INTO weapons (name, type, description, stock, image_url, price) VALUES
