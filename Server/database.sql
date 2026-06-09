@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
 -- Admin account  (password: Admin@123)
 INSERT INTO users (name, email, password, role) VALUES
   ('GachaMerch Admin', 'admin@gachamerch.com',
-   '$2b$10$rQZ9k7E1Kz0wXvNpLmT3OO5RQZfaB3hG2KjUyP8sW6dVnA1xMcEaO', 'admin');
+   '$2a$12$qiioRbsjC4Fp.0yDCc/v3ueehCQCHU8HB34OVM0.YlufBM.W0jy82', 'admin');
 
 -- Regular user  (password: User@123)
 INSERT INTO users (name, email, password, role) VALUES
